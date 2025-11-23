@@ -42,8 +42,8 @@ export function Lobby({ onJoinRoom, isConnected, error, availableRooms = [], onG
     // Use channel hook to check if channel exists
     const { isChannelOpen } = { isChannelOpen: true };
 
-    // Get session keypair from WebSocket context
-    const { keyPair } = useWebSocketContext();
+    // Get session key from WebSocket context (generated during authentication)
+    const { sessionKey } = useWebSocketContext();
 
     // Use wagmi hook for wallet connection
     const { address, isConnected: isWalletConnected } = useAccount();
@@ -120,7 +120,7 @@ export function Lobby({ onJoinRoom, isConnected, error, availableRooms = [], onG
 
     // Handle joining a specific available room
     const handleJoinAvailableRoom = (selectedRoomId: string) => {
-        if (!isWalletConnected || !address || !keyPair?.address) {
+        if (!isWalletConnected || !address || !sessionKey?.address) {
             return;
         }
 
@@ -134,8 +134,8 @@ export function Lobby({ onJoinRoom, isConnected, error, availableRooms = [], onG
         // Use session key address (must match signer)
         const selectedRoom = availableRooms.find(room => room.roomId === selectedRoomId);
         const roomBetAmount = selectedRoom?.betAmount || 0;
-        console.log("Joining available room with session key:", keyPair.address, "roomId:", selectedRoomId, "bet amount:", roomBetAmount);
-        onJoinRoom({ eoa: keyPair.address, roomId: selectedRoomId, betAmount: roomBetAmount });
+        console.log("Joining available room with session key:", sessionKey.address, "roomId:", selectedRoomId, "bet amount:", roomBetAmount);
+        onJoinRoom({ eoa: sessionKey.address, roomId: selectedRoomId, betAmount: roomBetAmount });
     };
 
     // Handle manual refresh of available rooms
@@ -174,18 +174,18 @@ export function Lobby({ onJoinRoom, isConnected, error, availableRooms = [], onG
         // Use session key address (must match signer)
         if (mode === "create") {
             // When creating a room, always pass undefined for roomId
-            console.log("Creating a room with session key:", keyPair?.address, "bet amount:", selectedBetAmount);
-            onJoinRoom({ eoa: keyPair!.address!, roomId: undefined, betAmount: selectedBetAmount });
+            console.log("Creating a room with session key:", sessionKey?.address, "bet amount:", selectedBetAmount);
+            onJoinRoom({ eoa: sessionKey!.address!, roomId: undefined, betAmount: selectedBetAmount });
         } else {
             // When joining, use the entered roomId
-            console.log("Joining a room with session key:", keyPair?.address, "roomId:", roomId.trim(), "bet amount:", selectedBetAmount);
-            onJoinRoom({ eoa: keyPair!.address!, roomId: roomId.trim(), betAmount: selectedBetAmount });
+            console.log("Joining a room with session key:", sessionKey?.address, "roomId:", roomId.trim(), "bet amount:", selectedBetAmount);
+            onJoinRoom({ eoa: sessionKey!.address!, roomId: roomId.trim(), betAmount: selectedBetAmount });
         }
     };
 
     // Handle successful channel creation
     const handleChannelSuccess = (action: "join" | "create", roomIdParam?: string) => {
-        if (!address || !keyPair?.address) return;
+        if (!address || !sessionKey?.address) return;
 
         // Use session key address (must match signer)
 
@@ -203,11 +203,11 @@ export function Lobby({ onJoinRoom, isConnected, error, availableRooms = [], onG
         window.localStorage.setItem("last_join_call_time", now.toString());
 
         if (action === "create") {
-            console.log("Creating a room with session key after channel creation:", keyPair.address, "bet amount:", selectedBetAmount);
-            onJoinRoom({ eoa: keyPair.address, roomId: undefined, betAmount: selectedBetAmount });
+            console.log("Creating a room with session key after channel creation:", sessionKey.address, "bet amount:", selectedBetAmount);
+            onJoinRoom({ eoa: sessionKey.address, roomId: undefined, betAmount: selectedBetAmount });
         } else {
-            console.log("Joining a room with session key after channel creation:", keyPair.address, "roomId:", roomIdParam, "bet amount:", selectedBetAmount);
-            onJoinRoom({ eoa: keyPair.address, roomId: roomIdParam, betAmount: selectedBetAmount });
+            console.log("Joining a room with session key after channel creation:", sessionKey.address, "roomId:", roomIdParam, "bet amount:", selectedBetAmount);
+            onJoinRoom({ eoa: sessionKey.address, roomId: roomIdParam, betAmount: selectedBetAmount });
         }
     };
 

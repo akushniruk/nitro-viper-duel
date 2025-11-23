@@ -12,15 +12,15 @@ export function useAppSessionSignature(
 ) {
     const [isSigningInProgress, setIsSigningInProgress] = useState(false);
     const [signatureError, setSignatureError] = useState<string | null>(null);
-    const { keyPair } = useWebSocketContext();
+    const { sessionKey } = useWebSocketContext(); // Use session key, not keyPair
 
     /**
      * Signs an app session message and sends it to the server
      */
     const signAppSessionMessage = useCallback(
         async (roomId: string, requestToSign: any, messageType: "appSession:signature" | "appSession:startGame") => {
-            if (!keyPair?.privateKey) {
-                throw new Error("No private key available for signing");
+            if (!sessionKey?.privateKey) {
+                throw new Error("No session key available for signing. Please ensure you are authenticated.");
             }
 
             setIsSigningInProgress(true);
@@ -30,8 +30,10 @@ export function useAppSessionSignature(
                 // ✅ CRITICAL: Sign the EXACT requestToSign array that server sent
                 // DO NOT use createAppSessionMessage() - that creates a NEW message with NEW timestamp
                 // The server already created the message, we just need to sign it
-                const signer = createECDSAMessageSigner(keyPair.privateKey as `0x${string}`);
-                console.log("Client signing requestToSign array:", requestToSign);
+                // Use the session key (generated during authentication) for signing
+                const signer = createECDSAMessageSigner(sessionKey.privateKey as `0x${string}`);
+                console.log("Client signing requestToSign with session key:", sessionKey.address);
+                console.log("Request to sign:", requestToSign);
 
                 // Sign the requestToSign array directly
                 const signature = await signer(requestToSign);
@@ -56,7 +58,7 @@ export function useAppSessionSignature(
                 throw error;
             }
         },
-        [keyPair, sendSignature, sendStartGame]
+        [sessionKey, sendSignature, sendStartGame]
     );
 
     /**

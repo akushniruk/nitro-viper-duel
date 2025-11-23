@@ -26,14 +26,15 @@ import { getPendingSession, setPendingSession } from './session-storage.js';
  * Generate app session message for multi-signature collection
  *
  * @param {string} roomId - Room ID
- * @param {string} participantA - First player address
- * @param {string} participantB - Second player address
+ * @param {string} participantA - First player's SESSION KEY address (not wallet address)
+ * @param {string} participantB - Second player's SESSION KEY address (not wallet address)
  * @param {number} betAmount - Bet amount per player (0, 0.01, 0.1, 1, 2)
  * @returns {Promise<Object>} Unsigned message and app definition
  */
 export async function generateAppSessionMessage(roomId, participantA, participantB, betAmount = 0) {
   try {
     // Format addresses to checksum format
+    // NOTE: These should be SESSION KEY addresses, not wallet addresses
     const formattedA = ethers.getAddress(participantA);
     const formattedB = ethers.getAddress(participantB);
 
@@ -176,7 +177,7 @@ export async function generateAppSessionMessage(roomId, participantA, participan
     // Generate message for signing
     // Use session signer for RPC messages
     const sign = rpcClient.sessionSigner || rpcClient.signMessage.bind(rpcClient);
-
+    logger.debug('Using session signer:', rpcClient);
     logger.nitro('Creating app session message...');
     const signedMessage = await createAppSessionMessage(sign, appSessionData);
     const parsedMessage = JSON.parse(signedMessage);

@@ -173,6 +173,20 @@ export class WebSocketClient {
     }
 
     /**
+     * Gets the session key (generated during authentication)
+     */
+    get currentSessionKey(): CryptoKeypair | null {
+        return this.sessionKey;
+    }
+
+    /**
+     * Gets the session signer (for signing RPC messages)
+     */
+    get currentSessionSigner(): MessageSigner | null {
+        return this.sessionSigner;
+    }
+
+    /**
      * Connects to the WebSocket server
      */
     async connect(): Promise<void> {
@@ -268,7 +282,7 @@ export class WebSocketClient {
 
             // Create session signer from session key private key
             this.sessionSigner = createECDSAMessageSigner(this.sessionKey.privateKey as Hex);
-            console.log("Session signer created for WebSocket message signing");
+            console.log("Session signer created for WebSocket message signing", this.sessionSigner);
         }
 
         const privyWalletAddress = walletClient.account.address;

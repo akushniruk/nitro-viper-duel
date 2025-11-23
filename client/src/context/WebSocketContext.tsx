@@ -19,6 +19,7 @@ interface WebSocketContextProps {
     client: WebSocketClient | null;
     status: WSStatus;
     keyPair: CryptoKeypair | null;
+    sessionKey: CryptoKeypair | null; // Session key generated during authentication
     wsChannel: Channel | null;
     currentNitroliteChannel: Channel | null;
     isConnected: boolean;
@@ -37,6 +38,7 @@ const WebSocketContext = createContext<WebSocketContextProps | undefined>(undefi
 export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [status, setStatus] = useState<WSStatus>("disconnected");
     const [keyPair, setKeyPair] = useState<CryptoKeypair | null>(null);
+    const [sessionKey, setSessionKey] = useState<CryptoKeypair | null>(null);
     const [currentSigner, setCurrentSigner] = useState<WalletSigner | null>(null);
     const [wsChannel, setWsChannel] = useState<Channel | null>(null);
     const [currentNitroliteChannel, setCurrentNitroliteChannel] = useState<Channel | null>(null);
@@ -168,9 +170,16 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
                 if (newStatus === "connected") {
                     setWsChannel(newClient.currentSubscribedChannel);
                     setCurrentNitroliteChannel(newClient.currentNitroliteChannel);
+                    // Get session key generated during authentication
+                    const sessionKeyFromClient = newClient.currentSessionKey;
+                    if (sessionKeyFromClient) {
+                        setSessionKey(sessionKeyFromClient);
+                        console.log("Session key loaded from WebSocket client:", sessionKeyFromClient.address);
+                    }
                 } else if (newStatus === "disconnected" || newStatus === "reconnect_failed") {
                     setWsChannel(null);
                     setCurrentNitroliteChannel(null);
+                    setSessionKey(null);
                 }
             });
 
@@ -306,6 +315,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
             client: clientRef.current,
             status,
             keyPair,
+            sessionKey,
             wsChannel,
             currentNitroliteChannel,
             isConnected: status === "connected",
@@ -321,6 +331,7 @@ export const WebSocketProvider: React.FC<{ children: ReactNode }> = ({ children 
         [
             status,
             keyPair,
+            sessionKey,
             wsChannel,
             currentNitroliteChannel,
             generateKeys,
